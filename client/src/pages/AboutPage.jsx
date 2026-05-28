@@ -34,9 +34,9 @@ const VALUES = [
 ];
 
 const TEAM = [
-  { name: 'Aryan Kapoor', role: 'Founder & CEO', emoji: '👨‍💻' },
+  { name: 'Muditya Lodhi', role: 'Founder & CEO', emoji: '👨‍💻' },
   { name: 'Priya Singh', role: 'Head of Design', emoji: '👩‍🎨' },
-  { name: 'Rahul Verma', role: 'Lead Engineer', emoji: '👨‍🔧' },
+  { name: 'Prakhar Chaturvedi', role: 'Lead Engineer', emoji: '👨‍🔧' },
   { name: 'Neha Sharma', role: 'Community Manager', emoji: '👩‍💼' },
 ];
 

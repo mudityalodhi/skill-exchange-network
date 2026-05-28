@@ -1,48 +1,48 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
-      minlength: [2, 'Name must be at least 2 characters'],
-      maxlength: [50, 'Name cannot exceed 50 characters'],
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [50, "Name cannot exceed 50 characters"],
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
       type: String,
-      minlength: [6, 'Password must be at least 6 characters'],
+      minlength: [6, "Password must be at least 6 characters"],
       select: false,
     },
     profileImage: {
       type: String,
-      default: '',
+      default: "",
     },
     cloudinaryId: {
       type: String,
-      default: '',
+      default: "",
     },
     bio: {
       type: String,
-      maxlength: [500, 'Bio cannot exceed 500 characters'],
-      default: '',
+      maxlength: [500, "Bio cannot exceed 500 characters"],
+      default: "",
     },
     skillsOffered: [
       {
         skill: { type: String, trim: true },
         level: {
           type: String,
-          enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
-          default: 'Intermediate',
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"],
+          default: "Intermediate",
         },
       },
     ],
@@ -59,14 +59,14 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
     socialLinks: {
-      linkedin: { type: String, default: '' },
-      github: { type: String, default: '' },
-      twitter: { type: String, default: '' },
-      website: { type: String, default: '' },
+      linkedin: { type: String, default: "" },
+      github: { type: String, default: "" },
+      twitter: { type: String, default: "" },
+      website: { type: String, default: "" },
     },
     portfolioLinks: [
       {
@@ -76,12 +76,12 @@ const userSchema = new mongoose.Schema(
     ],
     availability: {
       type: String,
-      enum: ['Weekdays', 'Weekends', 'Evenings', 'Flexible', 'Not Available'],
-      default: 'Flexible',
+      enum: ["Weekdays", "Weekends", "Evenings", "Flexible", "Not Available"],
+      default: "Flexible",
     },
     location: {
       type: String,
-      default: '',
+      default: "",
     },
     isVerified: {
       type: Boolean,
@@ -98,13 +98,13 @@ const userSchema = new mongoose.Schema(
     bookmarkedUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
       },
     ],
     bookmarkedArticles: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Article',
+        ref: "Article",
       },
     ],
     totalTeachingSessions: {
@@ -132,12 +132,12 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password') || !this.password) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password") || !this.password) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -150,10 +150,10 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Update average rating
 userSchema.methods.updateRating = async function () {
-  const Review = mongoose.model('Review');
+  const Review = mongoose.model("Review");
   const stats = await Review.aggregate([
     { $match: { reviewee: this._id } },
-    { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    { $group: { _id: null, avg: { $avg: "$rating" }, count: { $sum: 1 } } },
   ]);
   if (stats.length > 0) {
     this.averageRating = Math.round(stats[0].avg * 10) / 10;
@@ -166,10 +166,10 @@ userSchema.methods.updateRating = async function () {
 };
 
 // Virtual for full profile URL
-userSchema.virtual('profileUrl').get(function () {
+userSchema.virtual("profileUrl").get(function () {
   return `/profile/${this._id}`;
 });
 
-userSchema.set('toJSON', { virtuals: true });
+userSchema.set("toJSON", { virtuals: true });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

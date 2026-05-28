@@ -1,27 +1,34 @@
-const User = require('../models/User');
-const Review = require('../models/Review');
-const Exchange = require('../models/Exchange');
-const path = require('path');
-const fs = require('fs');
+const User = require("../models/User");
+const Review = require("../models/Review");
+const Exchange = require("../models/Exchange");
+const path = require("path");
+const fs = require("fs");
 
 // @desc    Get all users (with filters)
 // @route   GET /api/users
 // @access  Public
 const getUsers = async (req, res) => {
-  const { search, skill, availability, sort = '-createdAt', page = 1, limit = 12 } = req.query;
+  const {
+    search,
+    skill,
+    availability,
+    sort = "-createdAt",
+    page = 1,
+    limit = 12,
+  } = req.query;
 
   const query = { isActive: true };
 
   if (search) {
     query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { bio: { $regex: search, $options: 'i' } },
-      { 'skillsOffered.skill': { $regex: search, $options: 'i' } },
+      { name: { $regex: search, $options: "i" } },
+      { bio: { $regex: search, $options: "i" } },
+      { "skillsOffered.skill": { $regex: search, $options: "i" } },
     ];
   }
 
   if (skill) {
-    query['skillsOffered.skill'] = { $regex: skill, $options: 'i' };
+    query["skillsOffered.skill"] = { $regex: skill, $options: "i" };
   }
 
   if (availability) {
@@ -32,7 +39,9 @@ const getUsers = async (req, res) => {
   const total = await User.countDocuments(query);
 
   const users = await User.find(query)
-    .select('name profileImage bio skillsOffered skillsWanted credits averageRating totalReviews availability location lastSeen')
+    .select(
+      "name profileImage bio skillsOffered skillsWanted credits averageRating totalReviews availability location lastSeen",
+    )
     .sort(sort)
     .skip(skip)
     .limit(parseInt(limit));
@@ -53,15 +62,15 @@ const getUsers = async (req, res) => {
 // @route   GET /api/users/:id
 // @access  Public
 const getUserById = async (req, res) => {
-  const user = await User.findById(req.params.id).select('-password');
+  const user = await User.findById(req.params.id).select("-password");
 
   if (!user || !user.isActive) {
-    return res.status(404).json({ success: false, message: 'User not found.' });
+    return res.status(404).json({ success: false, message: "User not found." });
   }
 
   const reviews = await Review.find({ reviewee: user._id, isVisible: true })
-    .populate('reviewer', 'name profileImage')
-    .sort('-createdAt')
+    .populate("reviewer", "name profileImage")
+    .sort("-createdAt")
     .limit(10);
 
   res.json({ success: true, user, reviews });
@@ -72,8 +81,14 @@ const getUserById = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   const allowedFields = [
-    'name', 'bio', 'skillsOffered', 'skillsWanted',
-    'availability', 'location', 'socialLinks', 'portfolioLinks',
+    "name",
+    "bio",
+    "skillsOffered",
+    "skillsWanted",
+    "availability",
+    "location",
+    "socialLinks",
+    "portfolioLinks",
   ];
 
   const updates = {};
@@ -86,9 +101,9 @@ const updateProfile = async (req, res) => {
   const user = await User.findByIdAndUpdate(req.user._id, updates, {
     new: true,
     runValidators: true,
-  }).select('-password');
+  }).select("-password");
 
-  res.json({ success: true, message: 'Profile updated successfully.', user });
+  res.json({ success: true, message: "Profile updated successfully.", user });
 };
 
 // @desc    Upload profile image
@@ -96,7 +111,9 @@ const updateProfile = async (req, res) => {
 // @access  Private
 const uploadAvatar = async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ success: false, message: 'Please upload an image.' });
+    return res
+      .status(400)
+      .json({ success: false, message: "Please upload an image." });
   }
 
   const imageUrl = `/uploads/${req.file.filename}`;
@@ -104,8 +121,11 @@ const uploadAvatar = async (req, res) => {
   // Try Cloudinary if configured
   if (process.env.CLOUDINARY_CLOUD_NAME) {
     try {
-      const { uploadToCloudinary, deleteFromCloudinary } = require('../config/cloudinary');
-      const result = await uploadToCloudinary(req.file.path, 'sen/avatars');
+      const {
+        uploadToCloudinary,
+        deleteFromCloudinary,
+      } = require("../config/cloudinary");
+      const result = await uploadToCloudinary(req.file.path, "sen/avatars");
 
       // Delete old image
       const oldUser = await User.findById(req.user._id);
@@ -119,22 +139,25 @@ const uploadAvatar = async (req, res) => {
       const user = await User.findByIdAndUpdate(
         req.user._id,
         { profileImage: result.secure_url, cloudinaryId: result.public_id },
-        { new: true }
-      ).select('-password');
+        { new: true },
+      ).select("-password");
 
-      return res.json({ success: true, message: 'Avatar updated.', user });
+      return res.json({ success: true, message: "Avatar updated.", user });
     } catch (err) {
-      console.error('Cloudinary upload failed, using local storage:', err.message);
+      console.error(
+        "Cloudinary upload failed, using local storage:",
+        err.message,
+      );
     }
   }
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { profileImage: imageUrl },
-    { new: true }
-  ).select('-password');
+    { new: true },
+  ).select("-password");
 
-  res.json({ success: true, message: 'Avatar updated.', user });
+  res.json({ success: true, message: "Avatar updated.", user });
 };
 
 // @desc    Bookmark / unbookmark user
@@ -145,7 +168,9 @@ const toggleBookmarkUser = async (req, res) => {
   const currentUser = req.user;
 
   if (targetId === currentUser._id.toString()) {
-    return res.status(400).json({ success: false, message: 'Cannot bookmark yourself.' });
+    return res
+      .status(400)
+      .json({ success: false, message: "Cannot bookmark yourself." });
   }
 
   const isBookmarked = currentUser.bookmarkedUsers.includes(targetId);
@@ -155,12 +180,12 @@ const toggleBookmarkUser = async (req, res) => {
     isBookmarked
       ? { $pull: { bookmarkedUsers: targetId } }
       : { $addToSet: { bookmarkedUsers: targetId } },
-    { new: true }
-  ).select('-password');
+    { new: true },
+  ).select("-password");
 
   res.json({
     success: true,
-    message: isBookmarked ? 'Removed from bookmarks.' : 'Added to bookmarks.',
+    message: isBookmarked ? "Removed from bookmarks." : "Added to bookmarks.",
     isBookmarked: !isBookmarked,
     user,
   });
@@ -180,11 +205,13 @@ const getMatches = async (req, res) => {
     _id: { $ne: req.user._id },
     isActive: true,
     $or: [
-      { 'skillsOffered.skill': { $in: wantedSkills } },
+      { "skillsOffered.skill": { $in: wantedSkills } },
       { skillsWanted: { $in: offeredSkills } },
     ],
   })
-    .select('name profileImage bio skillsOffered skillsWanted averageRating availability location')
+    .select(
+      "name profileImage bio skillsOffered skillsWanted averageRating availability location",
+    )
     .limit(12);
 
   // Score matches
@@ -210,22 +237,30 @@ const getMatches = async (req, res) => {
 const getDashboard = async (req, res) => {
   const userId = req.user._id;
 
-  const [
-    sentExchanges,
-    receivedExchanges,
-    reviews,
-  ] = await Promise.all([
-    Exchange.find({ sender: userId }).populate('receiver', 'name profileImage').sort('-createdAt').limit(5),
-    Exchange.find({ receiver: userId }).populate('sender', 'name profileImage').sort('-createdAt').limit(5),
-    Review.find({ reviewee: userId }).populate('reviewer', 'name profileImage').sort('-createdAt').limit(5),
+  const [sentExchanges, receivedExchanges, reviews] = await Promise.all([
+    Exchange.find({ sender: userId })
+      .populate("receiver", "name profileImage")
+      .sort("-createdAt")
+      .limit(5),
+    Exchange.find({ receiver: userId })
+      .populate("sender", "name profileImage")
+      .sort("-createdAt")
+      .limit(5),
+    Review.find({ reviewee: userId })
+      .populate("reviewer", "name profileImage")
+      .sort("-createdAt")
+      .limit(5),
   ]);
 
   const stats = {
     totalExchanges: await Exchange.countDocuments({
       $or: [{ sender: userId }, { receiver: userId }],
-      status: 'completed',
+      status: "completed",
     }),
-    pendingRequests: await Exchange.countDocuments({ receiver: userId, status: 'pending' }),
+    pendingRequests: await Exchange.countDocuments({
+      receiver: userId,
+      status: "pending",
+    }),
     credits: req.user.credits,
     averageRating: req.user.averageRating,
     totalReviews: req.user.totalReviews,

@@ -1,5 +1,5 @@
-const Article = require('../models/Article');
-const User = require('../models/User');
+const Article = require("../models/Article");
+const User = require("../models/User");
 
 // @desc    Get all articles
 // @route   GET /api/articles
@@ -12,20 +12,20 @@ const getArticles = async (req, res) => {
     trending,
     page = 1,
     limit = 9,
-    sort = '-createdAt',
+    sort = "-createdAt",
   } = req.query;
 
-  const query = { isPublished: true, status: 'published' };
+  const query = { isPublished: true, status: "published" };
 
   if (category) query.category = category;
-  if (featured === 'true') query.isFeatured = true;
-  if (trending === 'true') query.isTrending = true;
+  if (featured === "true") query.isFeatured = true;
+  if (trending === "true") query.isTrending = true;
 
   if (search) {
     query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { excerpt: { $regex: search, $options: 'i' } },
-      { tags: { $regex: search, $options: 'i' } },
+      { title: { $regex: search, $options: "i" } },
+      { excerpt: { $regex: search, $options: "i" } },
+      { tags: { $regex: search, $options: "i" } },
     ];
   }
 
@@ -33,8 +33,8 @@ const getArticles = async (req, res) => {
   const total = await Article.countDocuments(query);
 
   const articles = await Article.find(query)
-    .populate('author', 'name profileImage')
-    .select('-content')
+    .populate("author", "name profileImage")
+    .select("-content")
     .sort(sort)
     .skip(skip)
     .limit(parseInt(limit));
@@ -54,11 +54,15 @@ const getArticles = async (req, res) => {
 // @route   GET /api/articles/:slug
 // @access  Public
 const getArticleBySlug = async (req, res) => {
-  const article = await Article.findOne({ slug: req.params.slug, isPublished: true })
-    .populate('author', 'name profileImage bio');
+  const article = await Article.findOne({
+    slug: req.params.slug,
+    isPublished: true,
+  }).populate("author", "name profileImage bio");
 
   if (!article) {
-    return res.status(404).json({ success: false, message: 'Article not found.' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Article not found." });
   }
 
   // Increment views
@@ -71,7 +75,7 @@ const getArticleBySlug = async (req, res) => {
     _id: { $ne: article._id },
     isPublished: true,
   })
-    .select('title thumbnail category readTime slug')
+    .select("title thumbnail category readTime slug")
     .limit(3);
 
   res.json({ success: true, article, related });
@@ -81,7 +85,8 @@ const getArticleBySlug = async (req, res) => {
 // @route   POST /api/articles
 // @access  Private/Admin
 const createArticle = async (req, res) => {
-  const { title, category, excerpt, content, tags, isFeatured, isTrending } = req.body;
+  const { title, category, excerpt, content, tags, isFeatured, isTrending } =
+    req.body;
 
   const article = await Article.create({
     title,
@@ -89,19 +94,19 @@ const createArticle = async (req, res) => {
     excerpt,
     content,
     tags: tags ? JSON.parse(tags) : [],
-    isFeatured: isFeatured === 'true',
-    isTrending: isTrending === 'true',
+    isFeatured: isFeatured === "true",
+    isTrending: isTrending === "true",
     author: req.user._id,
   });
 
   if (req.file) {
     if (process.env.CLOUDINARY_CLOUD_NAME) {
       try {
-        const { uploadToCloudinary } = require('../config/cloudinary');
-        const result = await uploadToCloudinary(req.file.path, 'sen/articles');
+        const { uploadToCloudinary } = require("../config/cloudinary");
+        const result = await uploadToCloudinary(req.file.path, "sen/articles");
         article.thumbnail = result.secure_url;
         article.thumbnailCloudId = result.public_id;
-        const fs = require('fs');
+        const fs = require("fs");
         fs.unlinkSync(req.file.path);
       } catch (err) {
         article.thumbnail = `/uploads/${req.file.filename}`;
@@ -112,7 +117,7 @@ const createArticle = async (req, res) => {
     await article.save();
   }
 
-  res.status(201).json({ success: true, message: 'Article created!', article });
+  res.status(201).json({ success: true, message: "Article created!", article });
 };
 
 // @desc    Update article (Admin)
@@ -122,13 +127,15 @@ const updateArticle = async (req, res) => {
   const article = await Article.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
-  }).populate('author', 'name profileImage');
+  }).populate("author", "name profileImage");
 
   if (!article) {
-    return res.status(404).json({ success: false, message: 'Article not found.' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Article not found." });
   }
 
-  res.json({ success: true, message: 'Article updated.', article });
+  res.json({ success: true, message: "Article updated.", article });
 };
 
 // @desc    Delete article (Admin)
@@ -137,9 +144,11 @@ const updateArticle = async (req, res) => {
 const deleteArticle = async (req, res) => {
   const article = await Article.findByIdAndDelete(req.params.id);
   if (!article) {
-    return res.status(404).json({ success: false, message: 'Article not found.' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Article not found." });
   }
-  res.json({ success: true, message: 'Article deleted.' });
+  res.json({ success: true, message: "Article deleted." });
 };
 
 // @desc    Like / Unlike article
@@ -148,7 +157,9 @@ const deleteArticle = async (req, res) => {
 const toggleLike = async (req, res) => {
   const article = await Article.findById(req.params.id);
   if (!article) {
-    return res.status(404).json({ success: false, message: 'Article not found.' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Article not found." });
   }
 
   const isLiked = article.likes.includes(req.user._id);
@@ -179,13 +190,13 @@ const toggleBookmarkArticle = async (req, res) => {
     user._id,
     isBookmarked
       ? { $pull: { bookmarkedArticles: articleId } }
-      : { $addToSet: { bookmarkedArticles: articleId } }
+      : { $addToSet: { bookmarkedArticles: articleId } },
   );
 
   res.json({
     success: true,
     isBookmarked: !isBookmarked,
-    message: isBookmarked ? 'Removed from bookmarks.' : 'Article bookmarked.',
+    message: isBookmarked ? "Removed from bookmarks." : "Article bookmarked.",
   });
 };
 
@@ -195,7 +206,7 @@ const toggleBookmarkArticle = async (req, res) => {
 const getCategories = async (req, res) => {
   const categories = await Article.aggregate([
     { $match: { isPublished: true } },
-    { $group: { _id: '$category', count: { $sum: 1 } } },
+    { $group: { _id: "$category", count: { $sum: 1 } } },
     { $sort: { count: -1 } },
   ]);
 

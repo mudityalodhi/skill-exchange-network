@@ -1,17 +1,17 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const conversationSchema = new mongoose.Schema(
   {
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
         required: true,
       },
     ],
     lastMessage: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Message',
+      ref: "Message",
     },
     lastMessageAt: {
       type: Date,
@@ -23,7 +23,7 @@ const conversationSchema = new mongoose.Schema(
       default: {},
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 conversationSchema.index({ participants: 1 });
@@ -32,23 +32,23 @@ const messageSchema = new mongoose.Schema(
   {
     conversation: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Conversation',
+      ref: "Conversation",
       required: true,
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     content: {
       type: String,
-      required: [true, 'Message content is required'],
-      maxlength: [2000, 'Message cannot exceed 2000 characters'],
+      required: [true, "Message content is required"],
+      maxlength: [2000, "Message cannot exceed 2000 characters"],
     },
     type: {
       type: String,
-      enum: ['text', 'image', 'file', 'system'],
-      default: 'text',
+      enum: ["text", "image", "file", "system"],
+      default: "text",
     },
     isRead: {
       type: Boolean,
@@ -61,12 +61,12 @@ const messageSchema = new mongoose.Schema(
       size: Number,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 messageSchema.index({ conversation: 1, createdAt: -1 });
 
-const Conversation = mongoose.model('Conversation', conversationSchema);
-const Message = mongoose.model('Message', messageSchema);
+const Conversation = mongoose.model("Conversation", conversationSchema);
+const Message = mongoose.model("Message", messageSchema);
 
 module.exports = { Conversation, Message };

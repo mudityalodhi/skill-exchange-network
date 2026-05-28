@@ -1,5 +1,5 @@
-const { Conversation, Message } = require('../models/Chat');
-const { emitToUser } = require('../sockets/socketManager');
+const { Conversation, Message } = require("../models/Chat");
+const { emitToUser } = require("../sockets/socketManager");
 
 // @desc    Get or create conversation
 // @route   POST /api/chat/conversations
@@ -10,14 +10,18 @@ const getOrCreateConversation = async (req, res) => {
 
   let conversation = await Conversation.findOne({
     participants: { $all: [userId, participantId] },
-  }).populate('participants', 'name profileImage lastSeen')
-    .populate({ path: 'lastMessage', populate: { path: 'sender', select: 'name' } });
+  })
+    .populate("participants", "name profileImage lastSeen")
+    .populate({
+      path: "lastMessage",
+      populate: { path: "sender", select: "name" },
+    });
 
   if (!conversation) {
     conversation = await Conversation.create({
       participants: [userId, participantId],
     });
-    await conversation.populate('participants', 'name profileImage lastSeen');
+    await conversation.populate("participants", "name profileImage lastSeen");
   }
 
   res.json({ success: true, conversation });
@@ -30,9 +34,12 @@ const getConversations = async (req, res) => {
   const conversations = await Conversation.find({
     participants: req.user._id,
   })
-    .populate('participants', 'name profileImage lastSeen isActive')
-    .populate({ path: 'lastMessage', populate: { path: 'sender', select: 'name' } })
-    .sort('-lastMessageAt');
+    .populate("participants", "name profileImage lastSeen isActive")
+    .populate({
+      path: "lastMessage",
+      populate: { path: "sender", select: "name" },
+    })
+    .sort("-lastMessageAt");
 
   res.json({ success: true, conversations });
 };
@@ -45,32 +52,42 @@ const getMessages = async (req, res) => {
   const conversation = await Conversation.findById(req.params.id);
 
   if (!conversation) {
-    return res.status(404).json({ success: false, message: 'Conversation not found.' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Conversation not found." });
   }
 
   if (!conversation.participants.includes(req.user._id)) {
-    return res.status(403).json({ success: false, message: 'Not authorized.' });
+    return res.status(403).json({ success: false, message: "Not authorized." });
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const total = await Message.countDocuments({ conversation: req.params.id });
 
   const messages = await Message.find({ conversation: req.params.id })
-    .populate('sender', 'name profileImage')
-    .sort('-createdAt')
+    .populate("sender", "name profileImage")
+    .sort("-createdAt")
     .skip(skip)
     .limit(parseInt(limit));
 
   // Mark messages as read
   await Message.updateMany(
-    { conversation: req.params.id, sender: { $ne: req.user._id }, isRead: false },
-    { isRead: true, readAt: new Date() }
+    {
+      conversation: req.params.id,
+      sender: { $ne: req.user._id },
+      isRead: false,
+    },
+    { isRead: true, readAt: new Date() },
   );
 
   res.json({
     success: true,
     messages: messages.reverse(),
-    pagination: { total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) },
+    pagination: {
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
+    },
   });
 };
 
@@ -83,7 +100,7 @@ const sendMessage = async (req, res) => {
 
   const conversation = await Conversation.findById(conversationId);
   if (!conversation || !conversation.participants.includes(req.user._id)) {
-    return res.status(403).json({ success: false, message: 'Not authorized.' });
+    return res.status(403).json({ success: false, message: "Not authorized." });
   }
 
   const message = await Message.create({
@@ -92,7 +109,7 @@ const sendMessage = async (req, res) => {
     content,
   });
 
-  await message.populate('sender', 'name profileImage');
+  await message.populate("sender", "name profileImage");
 
   // Update conversation
   conversation.lastMessage = message._id;
@@ -100,10 +117,17 @@ const sendMessage = async (req, res) => {
   await conversation.save();
 
   // Emit to other participant
-  const otherId = conversation.participants.find((p) => p.toString() !== req.user._id.toString());
-  emitToUser(otherId.toString(), 'new_message', { message, conversationId });
+  const otherId = conversation.participants.find(
+    (p) => p.toString() !== req.user._id.toString(),
+  );
+  emitToUser(otherId.toString(), "new_message", { message, conversationId });
 
   res.status(201).json({ success: true, message });
 };
 
-module.exports = { getOrCreateConversation, getConversations, getMessages, sendMessage };
+module.exports = {
+  getOrCreateConversation,
+  getConversations,
+  getMessages,
+  sendMessage,
+};

@@ -1,28 +1,28 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema(
   {
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     type: {
       type: String,
       enum: [
-        'exchange_request',
-        'exchange_accepted',
-        'exchange_rejected',
-        'exchange_completed',
-        'new_review',
-        'new_message',
-        'credit_earned',
-        'credit_spent',
-        'system',
+        "exchange_request",
+        "exchange_accepted",
+        "exchange_rejected",
+        "exchange_completed",
+        "new_review",
+        "new_message",
+        "credit_earned",
+        "credit_spent",
+        "system",
       ],
       required: true,
     },
@@ -36,7 +36,7 @@ const notificationSchema = new mongoose.Schema(
     },
     link: {
       type: String,
-      default: '',
+      default: "",
     },
     isRead: {
       type: Boolean,
@@ -47,10 +47,10 @@ const notificationSchema = new mongoose.Schema(
       default: {},
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 notificationSchema.index({ recipient: 1, isRead: 1 });
 notificationSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Notification', notificationSchema);
+module.exports = mongoose.model("Notification", notificationSchema);

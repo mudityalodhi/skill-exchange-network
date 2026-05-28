@@ -89,11 +89,13 @@ const Footer = () => {
           <p className="text-sen-muted text-sm font-body">
             © {year} SEN — Skill Exchange Network. All rights reserved.
           </p>
-          <div className="flex items-center gap-1 text-sen-muted text-sm font-body">
-            <span>Built with</span>
-            <span className="text-primary-500 mx-1">♥</span>
-            <span>on the MERN stack</span>
-          </div>
+
+          <p className="text-sen-muted text-sm font-body">
+            Crafted by{" "}
+            <span className="text-white font-medium">
+              Muditya Lodhi
+            </span>
+          </p>
         </div>
       </div>
     </footer>
